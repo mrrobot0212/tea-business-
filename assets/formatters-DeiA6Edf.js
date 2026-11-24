@@ -1,0 +1,1 @@
+import{n as e}from"./index-CApRYIN7.js";import{t}from"./parseISO-C-UHiI90.js";function n(n){try{return e(t(n),`dd MMM yyyy, hh:mm a`)}catch{return n}}function r(e){return e.split(` `).map(e=>e[0]).join(``).toUpperCase().slice(0,2)}export{r as n,n as t};

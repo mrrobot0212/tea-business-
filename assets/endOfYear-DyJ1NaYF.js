@@ -1,0 +1,1 @@
+import{c as e}from"./index-CApRYIN7.js";function t(t,n){let r=e(t,n?.in),i=r.getFullYear();return r.setFullYear(i+1,0,0),r.setHours(23,59,59,999),r}export{t};
