@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, isMissingCredentials } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
 
 type Partner = Database['public']['Tables']['partners']['Row']
@@ -20,6 +20,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // If Supabase isn't configured, skip auth and show login
+    if (isMissingCredentials) {
+      setLoading(false)
+      return
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
@@ -27,6 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setLoading(false)
       }
+    }).catch(() => {
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -43,16 +51,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function fetchPartner(userId: string) {
-    const { data } = await supabase
-      .from('partners')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-    setPartner(data)
-    setLoading(false)
+    try {
+      const { data } = await supabase
+        .from('partners')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      setPartner(data)
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function signIn(email: string, password: string) {
+    if (isMissingCredentials) {
+      return { error: { message: 'Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.' } }
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error }
   }
